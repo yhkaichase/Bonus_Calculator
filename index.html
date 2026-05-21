@@ -56,9 +56,9 @@
   .field label{display:block; font-size:12px; font-weight:500; margin-bottom:7px;}
   .field .hint{font-size:10.5px; color:var(--soft); font-weight:400;}
 
-  /* 4-column 사업부 선택 */
-  .bu-seg{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
-  .bu-seg button{font-family:inherit; font-size:12px; font-weight:500; padding:10px 0;
+  /* 3-column 사업부 선택 */
+  .bu-seg{display:grid; grid-template-columns:repeat(3,1fr); gap:6px;}
+  .bu-seg button{font-family:inherit; font-size:13px; font-weight:500; padding:9px 0;
     border:1px solid var(--line-strong); border-radius:2px; background:#fff;
     color:var(--soft); cursor:pointer; transition:all .12s; line-height:1.25;}
   .bu-seg button:hover{border-color:var(--ink);}
@@ -66,8 +66,6 @@
   .bu-seg button.on[data-bu=memory]{background:var(--bu-mem);}
   .bu-seg button.on[data-bu=common]{background:var(--bu-common);}
   .bu-seg button.on[data-bu=loss]{background:var(--bu-loss);}
-  .bu-seg button.on[data-bu=dxcss]{background:var(--bu-dxcss);}
-  .bu-seg button small{display:block; font-size:9.5px; font-weight:400; margin-top:2px; opacity:.85;}
 
   .seg{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
   .seg button{font-family:inherit; font-size:13px; font-weight:500; padding:9px 0;
@@ -157,6 +155,17 @@
 
   /* 차트 */
   #chartBox svg{display:block; width:100%; height:auto;}
+  .chart-zoom{display:flex; align-items:center; gap:6px; margin-bottom:8px;
+    font-family:'IBM Plex Mono',monospace; font-size:11px;}
+  .chart-zoom button{font-family:inherit; font-size:13px; font-weight:600;
+    background:#fff; border:1px solid var(--line-strong); border-radius:2px;
+    padding:2px 10px; cursor:pointer; color:var(--soft); line-height:1.2;
+    min-width:32px;}
+  .chart-zoom button:hover{border-color:var(--ink); color:var(--ink);}
+  .chart-zoom button:disabled{opacity:.35; cursor:default;}
+  .chart-zoom button:disabled:hover{border-color:var(--line-strong); color:var(--soft);}
+  .chart-zoom .zoom-range{padding:0 8px; color:var(--soft); font-weight:500;}
+  .chart-zoom .zoom-spacer{flex:1;}
   .chips{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
   .chip{display:flex; align-items:center; gap:6px; font-size:11px;
     background:#fff; border:1px solid var(--line); border-radius:3px; padding:5px 9px;}
@@ -165,7 +174,7 @@
   .chip .cv{font-family:'IBM Plex Mono',monospace; font-weight:600;}
 
   /* 사업부별 비교 표 */
-  .bu-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+  .bu-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
     background:var(--line); border:1px solid var(--line); border-radius:2px; overflow:hidden;
     margin-top:14px;}
   .bu-cell{background:var(--surface); padding:11px 10px;}
@@ -232,10 +241,9 @@
     <div class="field">
       <label>소속 사업부 <span class="hint">· 색상이 본인 사업부를 표시</span></label>
       <div class="bu-seg" id="buSeg">
-        <button data-bu="memory" class="on">메모리<small>흑자</small></button>
-        <button data-bu="common">공통조직<small>메모리 ×0.7</small></button>
-        <button data-bu="loss">적자 사업부<small>파운드리·LSI</small></button>
-        <button data-bu="dxcss">DX·CSS<small>별도 600만</small></button>
+        <button data-bu="memory" class="on">메모리</button>
+        <button data-bu="common">공통조직</button>
+        <button data-bu="loss">적자 사업부</button>
       </div>
     </div>
 
@@ -266,7 +274,7 @@
     </div>
 
     <div class="field">
-      <label>적용 연도 <span class="hint">· 2026~2035, 임계값과 적자 가중치 결정</span></label>
+      <label>적용 연도 <span class="hint">· 2026~2035, 임계값과 적자 사업부 가중치 결정</span></label>
       <div class="scn-head">
         <span class="big" id="yearBig">2026</span>
         <span class="delta" id="yearNote">—</span>
@@ -375,6 +383,13 @@
   <div class="card">
     <p class="card-t">영업이익 시나리오별 1인당 수령액 (세전)</p>
     <div class="chips" id="chips"></div>
+    <div class="chart-zoom">
+      <button id="zoomOut" type="button" aria-label="축소">−</button>
+      <button id="zoomIn"  type="button" aria-label="확대">+</button>
+      <span class="zoom-range" id="zoomRange">0 ~ 500조</span>
+      <span class="zoom-spacer"></span>
+      <button id="zoomReset" type="button" aria-label="초기화">⟲ 초기화</button>
+    </div>
     <div id="chartBox"></div>
   </div>
 
@@ -386,10 +401,9 @@
       <li>지급 조건: 2026~2028년 DS 영업이익 200조 달성 / 2029~2035년 100조 달성</li>
       <li>재원 배분: 부문 40%(DS 전체 균등) + 사업부 60%(메모리·공통조직·흑자사업부)</li>
       <li>공통조직 지급률 = 메모리의 0.7배</li>
-      <li>적자 사업부(파운드리·시스템LSI): 2026년 사업부 몫 0, 2027년부터 공통의 0.6배 적용</li>
+      <li>적자 사업부(메모리·공통 외 DS 사업부): 2026년 사업부 몫 0, 2027년부터 공통의 0.6배 적용</li>
       <li>OPI = 영업이익 × 1.5% (DS 임직원 풀, 임계값 조건 없음)</li>
       <li>자사주 1/3씩 즉시 매각 / 1년 제한 / 2년 제한</li>
-      <li>DX·CSS 부문은 별도로 600만원 상당 자사주 지급</li>
       <li>적용 기간: 10년 (2026~2035)</li>
     </ul>
     <p>유의: OPI의 정확한 개인 분배 공식(직급·연봉·고과별 차등)은 공개되어 있지 않아,
@@ -426,8 +440,7 @@
     threshold: { early:200, late:100 },  // 영업이익 임계값 (조원)
     earlyEndYear: 2028,        // 200조 적용 마지막 해
     period: { start:2026, end:2035 },
-    localTaxRate: 0.10,        // 지방소득세 = 소득세의 10%
-    dxcssBonus: 6000000        // DX·CSS 별도 자사주 (원)
+    localTaxRate: 0.10         // 지방소득세 = 소득세의 10%
   };
 
   /* ===================================================================
@@ -465,7 +478,9 @@
     year:         2026,
     opIncome:     50,        // 조원
     marginalRate: 0.35,
-    payoutPrice:  276000     // 원 (2026-05-20 삼성전자 종가)
+    payoutPrice:  276000,    // 원 (2026-05-20 삼성전자 종가)
+    chartXMin:    0,         // 차트 X축 표시 범위 (조원)
+    chartXMax:    500
   };
 
   // CL4에서만 보정 계수가 실제 적용된다. CL1~3은 항상 ×1.0.
@@ -480,8 +495,7 @@
   var BU_INFO = {
     memory: { name:"메모리",      color:"var(--bu-mem)",    hex:"#16307a" },
     common: { name:"공통조직",    color:"var(--bu-common)", hex:"#3a7d44" },
-    loss:   { name:"적자 사업부", color:"var(--bu-loss)",   hex:"#c08a2e" },
-    dxcss:  { name:"DX·CSS",     color:"var(--bu-dxcss)",  hex:"#7d4a8a" }
+    loss:   { name:"적자 사업부", color:"var(--bu-loss)",   hex:"#c08a2e" }
   };
 
   /* ── 헬퍼 ────────────────────────────────────────────────────────── */
@@ -509,7 +523,6 @@
    *   division    : 부문 몫 (40%) 1인당
    *   bu          : 사업부 몫 (60%) 1인당
    *   opi         : OPI 풀 ÷ DS 인원 (단순화 가정)
-   *   separate    : DX·CSS 별도 자사주
    *   gross       : 합계 세전
    */
   function computeFor(opIncomeJo, year, bu, salary, mult){
@@ -523,11 +536,8 @@
     // OPI는 모든 임직원에게 연봉 × 50%로 산정.
     opiPer = salary * 0.5;
 
-    if (bu === "dxcss"){
-      // DX·CSS: 특별경영성과급 없음, 별도 600만원 자사주 + OPI
-      sep = CONST.dxcssBonus;
-    } else if (meets){
-      // DS 사업부(메모리·공통·적자): 임계값 달성 시 특별경영성과급 + OPI
+    if (meets){
+      // 임계값 달성 시 특별경영성과급 + OPI
       pool = opIncomeWon * CONST.specialRate;
       divisionPer = (pool * CONST.divisionShare) / HC.total;
       var myW = bu === "memory" ? 1.0
@@ -537,7 +547,6 @@
     }
 
     // CL4 보정 계수: 특별경영성과급(부문 + 사업부)과 OPI에 모두 적용.
-    // DX·CSS 별도 자사주 600만원은 정액 지급으로 가정해 배수 미적용.
     divisionPer *= mult;
     buPer       *= mult;
     opiPer      *= mult;
@@ -581,14 +590,6 @@
   function renderThresh(c){
     var box = $("threshBox");
     var ico = $("threshIco"), t1 = $("threshT1"), t2 = $("threshT2");
-    if (input.bu === "dxcss"){
-      box.className = "thresh ok";
-      ico.textContent = "—";
-      ico.style.background = BU_INFO.dxcss.hex;
-      t1.textContent = "DX·CSS 부문 별도 지급";
-      t2.innerHTML   = "DS 영업이익 임계값과 무관하게 <b>600만원 상당 자사주</b> + 연봉 기반 OPI가 지급됩니다.";
-      return;
-    }
     if (c.meets){
       box.className = "thresh ok";
       ico.textContent = "✓"; ico.style.background = "";
@@ -612,17 +613,12 @@
 
     var m = effMult();
     var multTag = (m !== 1.0) ? " · ×" + m.toFixed(1) + " 보정" : "";
-    if (input.bu === "dxcss"){
-      rows.push({ lab:"DX·CSS 별도 자사주", val:compact(c.sep), color:bi.hex,
-        sub:"DS 영업이익과 무관하게 정액 지급 (보정 미적용)" });
-    } else {
-      rows.push({ lab:"부문 몫 (40% / DS 전체 균등)", val:compact(c.divisionPer),
-        color:"#9a9690", sub:"DS 전체 "+HC.total.toLocaleString("ko-KR")+"명 균등 분배"+multTag });
-      rows.push({ lab:"사업부 몫 (60% / 가중 분배)", val:compact(c.buPer), color:bi.hex,
-        sub:"메모리 1.0 · 공통 0.7 · 적자 "
-          + (input.year<=2026 ? "0 (2026 유예)" : "0.6 (2027~)") + multTag });
-    }
-    // OPI 는 모든 임직원에게 동일 산정 (DX·CSS 포함)
+    rows.push({ lab:"부문 몫 (40% / DS 전체 균등)", val:compact(c.divisionPer),
+      color:"#9a9690", sub:"DS 전체 "+HC.total.toLocaleString("ko-KR")+"명 균등 분배"+multTag });
+    rows.push({ lab:"사업부 몫 (60% / 가중 분배)", val:compact(c.buPer), color:bi.hex,
+      sub:"메모리 1.0 · 공통 0.7 · 적자 "
+        + (input.year<=2026 ? "0 (2026 유예)" : "0.6 (2027~)") + multTag });
+    // OPI 는 모든 임직원에게 동일 산정
     rows.push({ lab:"OPI (연봉 × 50%)", val:compact(c.opiPer),
       color:"#6f6b62", sub:"연봉의 50%" + multTag });
     var html = "";
@@ -666,7 +662,7 @@
   /* ── 렌더: 사업부별 비교 ─────────────────────────────────────────── */
   function renderBuGrid(){
     var box = $("buGrid"); box.innerHTML = "";
-    ["memory","common","loss","dxcss"].forEach(function(bu){
+    ["memory","common","loss"].forEach(function(bu){
       var bi = BU_INFO[bu];
       var c = computeFor(input.opIncome, input.year, bu, input.salary, effMult());
       var el = document.createElement("div");
@@ -678,17 +674,34 @@
     });
   }
 
+  /* ── 헬퍼: X축 nice ticks ────────────────────────────────────────── */
+  function niceTicks(min, max){
+    var range = max - min;
+    if (range <= 0) return [min];
+    var rough = range / 5;
+    var mag = Math.pow(10, Math.floor(Math.log10(rough)));
+    var res = rough / mag;
+    var step = res < 1.5 ? mag : res < 3 ? 2*mag : res < 7 ? 5*mag : 10*mag;
+    var ticks = [];
+    var start = Math.ceil(min / step) * step;
+    for (var t = start; t <= max + 1e-6; t += step) ticks.push(Math.round(t));
+    return ticks;
+  }
+
   /* ── 렌더: 차트 (영업이익 → 1인당, 사업부별 곡선) ────────────────── */
   function renderChart(){
-    // 0~500조에서 10조 step 샘플링
-    var samples = [];
-    for (var op = 0; op <= 500; op += 5) samples.push(op);
+    var xMin = input.chartXMin;
+    var xMax = input.chartXMax;
+    var width = xMax - xMin;
+    var step = Math.max(1, Math.round(width / 100));
 
-    var series = {
-      memory: [], common: [], loss: [], dxcss: []
-    };
+    var samples = [];
+    for (var op = xMin; op <= xMax; op += step) samples.push(op);
+    if (samples[samples.length-1] < xMax) samples.push(xMax);
+
+    var series = { memory: [], common: [], loss: [] };
     samples.forEach(function(op){
-      ["memory","common","loss","dxcss"].forEach(function(bu){
+      ["memory","common","loss"].forEach(function(bu){
         var c = computeFor(op, input.year, bu, input.salary, effMult());
         series[bu].push(c.gross);
       });
@@ -704,7 +717,7 @@
 
     var W=620, H=240, padL=58, padR=18, padT=14, padB=30;
     var plotW=W-padL-padR, plotH=H-padT-padB;
-    function X(op){ return padL + (op/500)*plotW; }
+    function X(op){ return padL + ((op - xMin) / width) * plotW; }
     function Y(v){ return padT + (1 - (v-lo)/(hi-lo))*plotH; }
 
     var s = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" '+
@@ -718,43 +731,51 @@
       s+='<text x="'+(padL-8)+'" y="'+(gy+3)+'" font-size="9" fill="#6f6b62" '+
          'text-anchor="end">'+(gv/1e8).toFixed(0)+'억</text>';
     }
-    // x 라벨
-    [0, 100, 200, 300, 400, 500].forEach(function(op){
+    // x 라벨 (동적)
+    niceTicks(xMin, xMax).forEach(function(op){
       s+='<text x="'+X(op)+'" y="'+(H-12)+'" font-size="9" fill="#6f6b62" '+
          'text-anchor="middle">'+op+'조</text>';
     });
-    // 임계값 수직선
+    // 임계값 수직선 (가시 범위 내에서만)
     var th = thresholdFor(input.year);
-    s+='<line x1="'+X(th)+'" y1="'+padT+'" x2="'+X(th)+'" y2="'+(H-padB)+
-       '" stroke="#c0492e" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>';
-    s+='<text x="'+X(th)+'" y="'+(padT+10)+'" font-size="9" fill="#c0492e" '+
-       'text-anchor="middle">임계값 '+th+'조</text>';
+    if (th >= xMin && th <= xMax){
+      s+='<line x1="'+X(th)+'" y1="'+padT+'" x2="'+X(th)+'" y2="'+(H-padB)+
+         '" stroke="#c0492e" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>';
+      s+='<text x="'+X(th)+'" y="'+(padT+10)+'" font-size="9" fill="#c0492e" '+
+         'text-anchor="middle">임계값 '+th+'조</text>';
+    }
 
-    // 곡선
-    function poly(data, color, dash){
+    // 곡선 — 클리핑을 위해 가시 범위로 자른 데이터만
+    function poly(data, color){
       var pts = data.map(function(v,i){ return X(samples[i])+','+Y(v); }).join(" ");
       return '<polyline points="'+pts+'" fill="none" stroke="'+color+
-        '" stroke-width="1.8" stroke-linejoin="round"'+
-        (dash?' stroke-dasharray="3 3"':'')+'/>';
+        '" stroke-width="1.8" stroke-linejoin="round"/>';
     }
     s += poly(series.memory, BU_INFO.memory.hex);
     s += poly(series.common, BU_INFO.common.hex);
     s += poly(series.loss,   BU_INFO.loss.hex);
-    s += poly(series.dxcss,  BU_INFO.dxcss.hex, true);
 
-    // 현재 시나리오 마커
+    // 현재 시나리오 마커 (가시 범위 내에서만)
     var curOp = input.opIncome;
-    var c = computeFor(curOp, input.year, input.bu, input.salary, effMult());
-    s+='<line x1="'+X(curOp)+'" y1="'+padT+'" x2="'+X(curOp)+'" y2="'+(H-padB)+
-       '" stroke="#1c1b18" stroke-width="1"/>';
-    s+='<circle cx="'+X(curOp)+'" cy="'+Y(c.gross)+'" r="4" fill="#1c1b18"/>';
+    if (curOp >= xMin && curOp <= xMax){
+      var c = computeFor(curOp, input.year, input.bu, input.salary, effMult());
+      s+='<line x1="'+X(curOp)+'" y1="'+padT+'" x2="'+X(curOp)+'" y2="'+(H-padB)+
+         '" stroke="#1c1b18" stroke-width="1"/>';
+      s+='<circle cx="'+X(curOp)+'" cy="'+Y(c.gross)+'" r="4" fill="#1c1b18"/>';
+    }
 
     s += '</svg>';
     $("chartBox").innerHTML = s;
 
-    // 칩 (4 사업부)
+    // 줌 컨트롤 상태
+    $("zoomRange").textContent = xMin + " ~ " + xMax + "조";
+    $("zoomOut").disabled = (width >= 500);
+    $("zoomIn").disabled  = (width <= 10);
+    $("zoomReset").disabled = (xMin === 0 && xMax === 500);
+
+    // 칩 (현재 시나리오 사업부별)
     var chipsBox = $("chips"); chipsBox.innerHTML = "";
-    ["memory","common","loss","dxcss"].forEach(function(bu){
+    ["memory","common","loss"].forEach(function(bu){
       var bi = BU_INFO[bu];
       var cc = computeFor(input.opIncome, input.year, bu, input.salary, effMult());
       var el = document.createElement("div");
@@ -764,6 +785,25 @@
         '<span class="cv">'+compact(cc.gross)+'</span>';
       chipsBox.appendChild(el);
     });
+  }
+
+  /* ── 줌 동작: 현재 영업이익을 중심으로 확대/축소 ──────────────────── */
+  function zoomBy(factor){
+    var w  = input.chartXMax - input.chartXMin;
+    var nw = Math.max(10, Math.min(500, w * factor));
+    var center = input.opIncome;
+    // 가시 범위가 0~500을 벗어나지 않게 조정
+    var nMin = Math.max(0, center - nw/2);
+    var nMax = nMin + nw;
+    if (nMax > 500){ nMax = 500; nMin = Math.max(0, 500 - nw); }
+    input.chartXMin = Math.round(nMin);
+    input.chartXMax = Math.round(nMax);
+    render();
+  }
+  function resetZoom(){
+    input.chartXMin = 0;
+    input.chartXMax = 500;
+    render();
   }
 
   /* ── 메인 렌더 ───────────────────────────────────────────────────── */
@@ -855,6 +895,18 @@
     $("infoToggle").addEventListener("click", function(){
       var open = $("infoCard").classList.toggle("hidden");
       this.querySelector(".ar").textContent = open ? "[ + ]" : "[ − ]";
+    });
+    $("zoomIn").addEventListener("click", function(){
+      if (this.disabled) return;
+      zoomBy(0.5);
+    });
+    $("zoomOut").addEventListener("click", function(){
+      if (this.disabled) return;
+      zoomBy(2);
+    });
+    $("zoomReset").addEventListener("click", function(){
+      if (this.disabled) return;
+      resetZoom();
     });
   }
 
