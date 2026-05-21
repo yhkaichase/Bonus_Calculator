@@ -5,10 +5,14 @@
 GitHub Actions에서 평일 18:30 KST (= 09:30 UTC)에 실행되어 자사주
 환산 주가 기본값을 자동으로 갱신한다.
 
+User-Agent는 "솔직한 봇" 패턴 ("samsung-bonus-calculator updater")으로
+설정한다. 가짜 Chrome UA로 위장하면 클라우드 IP에서 Yahoo 차단(429)에
+걸리기 쉽지만, 명시적 봇 UA는 비교적 안정적이다 (PSU 계산기에서 검증됨).
+
 출력 data.json 스키마:
     {
-        "asOf":          "YYYY-MM-DD",   # KST 거래일
-        "currentPrice":  276000,         # 원
+        "asOf":          "YYYY-MM-DD",
+        "currentPrice":  276000,
         "source":        "Yahoo Finance 005930.KS daily close"
     }
 """
@@ -29,16 +33,11 @@ OUTPUT_PATH = Path(__file__).resolve().parent.parent / "data.json"
 
 
 def fetch() -> dict:
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/124.0.0.0 Safari/537.36"
-        ),
-        "Accept": "application/json,text/plain,*/*",
-        "Accept-Language": "en-US,en;q=0.9",
-    }
-    req = urllib.request.Request(URL, headers=headers)
+    # 추가 헤더 없이 단순 봇 UA만 사용 — 가짜 Chrome 위장보다 안정적.
+    req = urllib.request.Request(
+        URL,
+        headers={"User-Agent": "Mozilla/5.0 (samsung-bonus-calculator updater)"},
+    )
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
