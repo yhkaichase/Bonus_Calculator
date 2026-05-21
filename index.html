@@ -934,9 +934,11 @@
         if (data && data.currentPrice && data.currentPrice > 0){
           input.payoutPrice = data.currentPrice;
           $("payoutPrice").value = "₩" + data.currentPrice.toLocaleString("ko-KR");
-          if (data.asOf && !data.sample){
-            $("payoutPriceHint").textContent =
-              "· 자동 갱신: " + data.asOf + " 종가 기준 (매일 18:30 KST 갱신)";
+          if (data.asOf){
+            // sample 여부와 무관하게 항상 asOf 표시
+            $("payoutPriceHint").textContent = data.sample
+              ? "· 기본값: " + data.asOf + " 종가 (GitHub Actions 실행 후 자동 갱신)"
+              : "· 자동 갱신: " + data.asOf + " 종가 (매일 18:30 KST)";
           }
         }
       })
