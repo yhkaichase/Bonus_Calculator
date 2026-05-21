@@ -243,7 +243,7 @@
       <div class="bu-seg" id="buSeg">
         <button data-bu="memory" class="on">메모리</button>
         <button data-bu="common">공통조직</button>
-        <button data-bu="loss">적자 사업부</button>
+        <button data-bu="loss">파운드리·LSI</button>
       </div>
     </div>
 
@@ -274,7 +274,7 @@
     </div>
 
     <div class="field">
-      <label>적용 연도 <span class="hint">· 2026~2035, 임계값과 적자 사업부 가중치 결정</span></label>
+      <label>적용 연도 <span class="hint">· 2026~2035, 임계값과 파운드리·LSI 가중치 결정</span></label>
       <div class="scn-head">
         <span class="big" id="yearBig">2026</span>
         <span class="delta" id="yearNote">—</span>
@@ -400,8 +400,8 @@
       <li>DS 특별경영성과급 = 영업이익 × 10.5% (한도 없음, 세후 전액 자사주)</li>
       <li>지급 조건: 2026~2028년 DS 영업이익 200조 달성 / 2029~2035년 100조 달성</li>
       <li>재원 배분: 부문 40%(DS 전체 균등) + 사업부 60%(메모리·공통조직·흑자사업부)</li>
-      <li>공통조직 지급률 = 메모리의 0.7배</li>
-      <li>적자 사업부(메모리·공통 외 DS 사업부): 2026년 사업부 몫 0, 2027년부터 공통의 0.6배 적용</li>
+      <li>공통조직 지급률 = 메모리의 0.7배 (부문·사업부 양쪽에 일관 적용)</li>
+      <li>파운드리·LSI: 사업부 재원(60%)에는 비참여. 부문 재원(40%)에서 메모리 대비 2026년 1.0배, 2027년부터 0.6배 적용</li>
       <li>OPI = 영업이익 × 1.5% (DS 임직원 풀, 임계값 조건 없음)</li>
       <li>자사주 1/3씩 즉시 매각 / 1년 제한 / 2년 제한</li>
       <li>적용 기간: 10년 (2026~2035)</li>
@@ -415,7 +415,7 @@
 
   <p class="foot">
     본 계산기는 2026-05-20 노사 잠정합의서에 대한 공개 보도를 바탕으로 한 비공식 참고용 도구입니다.
-    OPI의 정확한 개인 분배 공식, 사업부 인원수, 적자 사업부 가중치 적용 방식 등은 공식 합의서 본문에
+    OPI의 정확한 개인 분배 공식, 사업부 인원수, 파운드리·LSI 가중치 적용 방식 등은 공식 합의서 본문에
     따라 다를 수 있습니다. 세후 추정은 한계세율 + 지방소득세 10%의 단순 추정치입니다.
     제도 정보 출처: 세계일보(2026-05-21), 부산일보(2026-05-21). 한계세율: 국세청 소득세법 제55조.
   </p>
@@ -432,11 +432,11 @@
   var CONST = {
     specialRate: 0.105,        // DS 특별경영성과급 재원율 (영업이익 대비)
     opiRate:     0.015,        // OPI 재원율 (영업이익 대비)
-    divisionShare: 0.4,        // 부문 몫 (DS 전체 균등)
-    buShare:       0.6,        // 사업부 몫 (가중 분배)
-    commonWeight:  0.7,        // 공통조직 가중치 (메모리 대비)
-    lossWeight2026: 0.0,       // 2026 적자 사업부 가중치 (유예)
-    lossWeight2027: 0.6,       // 2027~ 적자 사업부 가중치
+    divisionShare: 0.4,        // 부문 재원 비율
+    buShare:       0.6,        // 사업부 재원 비율 (메모리·공통만 분배)
+    commonRatio:   0.7,        // 공통 total = 메모리 total × 0.7 (부문+사업부 합산)
+    divLossWeight2026: 1.0,    // 2026 적자 사업부의 부문 균등 가중치 (=정상)
+    divLossWeight2027: 0.6,    // 2027~ 적자 사업부의 부문 균등 가중치 (=60% 차등)
     threshold: { early:200, late:100 },  // 영업이익 임계값 (조원)
     earlyEndYear: 2028,        // 200조 적용 마지막 해
     period: { start:2026, end:2035 },
@@ -495,7 +495,7 @@
   var BU_INFO = {
     memory: { name:"메모리",      color:"var(--bu-mem)",    hex:"#16307a" },
     common: { name:"공통조직",    color:"var(--bu-common)", hex:"#3a7d44" },
-    loss:   { name:"적자 사업부", color:"var(--bu-loss)",   hex:"#c08a2e" }
+    loss:   { name:"파운드리·LSI", color:"var(--bu-loss)",   hex:"#c08a2e" }
   };
 
   /* ── 헬퍼 ────────────────────────────────────────────────────────── */
@@ -513,8 +513,8 @@
   function thresholdFor(year){
     return year <= CONST.earlyEndYear ? CONST.threshold.early : CONST.threshold.late;
   }
-  function lossWeightFor(year){
-    return year <= 2026 ? CONST.lossWeight2026 : CONST.lossWeight2027;
+  function divLossWeightFor(year){
+    return year <= 2026 ? CONST.divLossWeight2026 : CONST.divLossWeight2027;
   }
 
   /**
@@ -527,34 +527,48 @@
    */
   function computeFor(opIncomeJo, year, bu, salary, mult){
     var meets = opIncomeJo >= thresholdFor(year);
-    var lossW = lossWeightFor(year);
-    var weighted = HC.memory*1.0 + HC.common*CONST.commonWeight + HC.loss*lossW;
+    var dlw   = divLossWeightFor(year);     // 파운드리·LSI 부문 가중치 (2026:1.0, 2027~:0.6)
+    var r     = CONST.commonRatio;          // 0.7 = 공통/메모리 비율 (부문·사업부 양쪽 일관 적용)
+    var opIncomeWon = opIncomeJo * 1e12;
 
-    var divisionPer = 0, buPer = 0, opiPer = 0, sep = 0, pool = 0;
-    var opIncomeWon = opIncomeJo * 1e12;  // 조 → 원
-
-    // OPI는 모든 임직원에게 연봉 × 50%로 산정.
+    var divisionPer = 0, buPer = 0, opiPer = 0, pool = 0;
     opiPer = salary * 0.5;
 
     if (meets){
-      // 임계값 달성 시 특별경영성과급 + OPI
       pool = opIncomeWon * CONST.specialRate;
-      divisionPer = (pool * CONST.divisionShare) / HC.total;
-      var myW = bu === "memory" ? 1.0
-              : bu === "common" ? CONST.commonWeight
-              : /* loss */        lossW;
-      buPer = weighted > 0 ? (pool * CONST.buShare / weighted) * myW : 0;
+      var divisionPool = pool * CONST.divisionShare;
+      var buPool       = pool * CONST.buShare;
+
+      // 메모리 기준 1인당 산출 (부문, 사업부 각각)
+      // 부문 가중인원: N_m × 1.0 + N_c × 0.7 + N_l × dlw
+      var divWeighted = HC.memory + r * HC.common + dlw * HC.loss;
+      var X_m = divisionPool / divWeighted;
+
+      // 사업부 가중인원: N_m × 1.0 + N_c × 0.7 (적자는 비참여)
+      var buWeighted = HC.memory + r * HC.common;
+      var Y_m = buPool / buWeighted;
+
+      if (bu === "memory"){
+        divisionPer = X_m;
+        buPer       = Y_m;
+      } else if (bu === "common"){
+        divisionPer = r * X_m;     // 메모리 부문 × 0.7
+        buPer       = r * Y_m;     // 메모리 사업부 × 0.7
+      } else { // loss (파운드리·LSI)
+        divisionPer = dlw * X_m;   // 메모리 부문 × dlw
+        buPer       = 0;           // 적자 시 사업부 재원 비참여
+      }
     }
 
-    // CL4 보정 계수: 특별경영성과급(부문 + 사업부)과 OPI에 모두 적용.
+    // CL4 보정 계수
     divisionPer *= mult;
     buPer       *= mult;
     opiPer      *= mult;
 
-    var gross = divisionPer + buPer + opiPer + sep;
+    var gross = divisionPer + buPer + opiPer;
     return {
       meets: meets, pool: pool, divisionPer: divisionPer, buPer: buPer,
-      opiPer: opiPer, sep: sep, gross: gross
+      opiPer: opiPer, sep: 0, gross: gross
     };
   }
 
@@ -613,11 +627,23 @@
 
     var m = effMult();
     var multTag = (m !== 1.0) ? " · ×" + m.toFixed(1) + " 보정" : "";
-    rows.push({ lab:"부문 몫 (40% / DS 전체 균등)", val:compact(c.divisionPer),
-      color:"#9a9690", sub:"DS 전체 "+HC.total.toLocaleString("ko-KR")+"명 균등 분배"+multTag });
-    rows.push({ lab:"사업부 몫 (60% / 가중 분배)", val:compact(c.buPer), color:bi.hex,
-      sub:"메모리 1.0 · 공통 0.7 · 적자 "
-        + (input.year<=2026 ? "0 (2026 유예)" : "0.6 (2027~)") + multTag });
+    var divSub, buSub;
+    if (input.bu === "memory"){
+      divSub = "메모리 기준 (가중치 1.0)" + multTag;
+      buSub  = "메모리 기준 (가중치 1.0)" + multTag;
+    } else if (input.bu === "common"){
+      divSub = "메모리의 70%" + multTag;
+      buSub  = "메모리의 70%" + multTag;
+    } else { // loss (파운드리·LSI)
+      divSub = (input.year <= 2026
+        ? "메모리와 동일 (2026)"
+        : "메모리의 60% (2027~)") + multTag;
+      buSub  = "파운드리·LSI는 적자 시 사업부 재원 비참여";
+    }
+    rows.push({ lab:"부문 몫 (40%)", val:compact(c.divisionPer),
+      color:"#9a9690", sub:divSub });
+    rows.push({ lab:"사업부 몫 (60%)", val:compact(c.buPer), color:bi.hex,
+      sub:buSub });
     // OPI 는 모든 임직원에게 동일 산정
     rows.push({ lab:"OPI (연봉 × 50%)", val:compact(c.opiPer),
       color:"#6f6b62", sub:"연봉의 50%" + multTag });
@@ -822,8 +848,8 @@
 
     // 연도 노트
     var th = thresholdFor(input.year);
-    var lw = lossWeightFor(input.year);
-    $("yearNote").textContent = "임계값 " + th + "조 · 적자 가중치 ×" + lw.toFixed(1);
+    var lw = divLossWeightFor(input.year);
+    $("yearNote").textContent = "임계값 " + th + "조 · 파운드리·LSI 부문 가중치 ×" + lw.toFixed(1);
     $("opNote").innerHTML = input.opIncome >= th
       ? '<span style="color:'+BU_INFO.common.hex+'">▲ 임계값 달성</span>'
       : '<span style="color:#c0492e">▼ 임계값 미달</span>';
