@@ -138,7 +138,7 @@
 
   /* 자사주 lockup 시각화 */
   .lockup{margin-top:14px;}
-  .lockup-bar{display:flex; min-height:96px; border:1px solid var(--line); border-radius:3px; overflow:hidden;}
+  .lockup-bar{display:flex; min-height:78px; border:1px solid var(--line); border-radius:3px; overflow:hidden;}
   .lockup-bar .lk{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
     color:#fff; line-height:1.3; padding:9px 5px; text-align:center; gap:2px;
     border-right:1px solid rgba(255,255,255,.25);}
@@ -146,8 +146,6 @@
   .lockup-bar .lk .ll-lab{font-size:10px; opacity:.95;}
   .lockup-bar .lk b{font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:600;}
   .lockup-bar .lk .ll-val{font-family:'IBM Plex Mono',monospace; font-size:10.5px; opacity:.9; margin-top:1px;}
-  .lockup-bar .lk .ll-tax{font-family:'IBM Plex Mono',monospace; font-size:9.5px; opacity:.78;
-    margin-top:3px; padding-top:4px; border-top:1px dotted rgba(255,255,255,.45);}
   .lockup-bar .lk.l1{background:#3a7d5a;}
   .lockup-bar .lk.l2{background:#5a7a3a;}
   .lockup-bar .lk.l3{background:#7d6b2e;}
@@ -350,25 +348,22 @@
           <span class="ll-lab">즉시 매각 가능</span>
           <b id="lk1s">— 주</b>
           <span class="ll-val" id="lk1v">—</span>
-          <span class="ll-tax" id="lk1t">세금 —</span>
         </div>
         <div class="lk l2">
           <span class="ll-lab">1년 제한</span>
           <b id="lk2s">— 주</b>
           <span class="ll-val" id="lk2v">—</span>
-          <span class="ll-tax" id="lk2t">세금 —</span>
         </div>
         <div class="lk l3">
           <span class="ll-lab">2년 제한</span>
           <b id="lk3s">— 주</b>
           <span class="ll-val" id="lk3v">—</span>
-          <span class="ll-tax" id="lk3t">세금 —</span>
         </div>
       </div>
       <div class="lockup-note">
         자사주는 1/3씩 즉시 매각 / 1년 제한 / 2년 제한으로 분할 지급됩니다.
-        환산 금액 = 분량 주식수 × 입력 환산 주가. 예상 세금은 회사가 원천징수한
-        세금 총액을 주식수 비율로 분배한 값입니다.
+        환산 금액 = 분량 주식수 × 입력 환산 주가. 세금은 지급 시점에 일괄
+        원천징수되어 위의 세후 수령액에 이미 반영되어 있습니다.
       </div>
     </div>
   </div>
@@ -674,14 +669,9 @@
     var price = input.payoutPrice;
     var val = sh.map(function(s){ return s * price; });
 
-    // 분량별 세금 (총 세금을 주식수 비율로 안분)
-    var totalShares = c.shares || 1;
-    var taxes = sh.map(function(s){ return c.tax * (s / totalShares); });
-
     for (var i = 0; i < 3; i++){
       $("lk" + (i+1) + "s").textContent = sh[i].toLocaleString("ko-KR") + " 주";
       $("lk" + (i+1) + "v").textContent = compact(val[i]);
-      $("lk" + (i+1) + "t").textContent = "세금 " + compact(taxes[i]);
     }
   }
 
