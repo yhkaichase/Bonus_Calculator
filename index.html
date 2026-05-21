@@ -102,6 +102,9 @@
 
   /* 임계값 체크 */
   .thresh{display:flex; align-items:center; gap:14px;}
+  .thresh + .breakdown{margin-top:14px;}
+  .field + .thresh{margin-top:14px;}
+  .field + .out-grid{margin-top:12px;}
   .thresh .ico{font-size:22px; font-weight:600; line-height:1;
     width:54px; height:54px; border-radius:3px;
     display:flex; align-items:center; justify-content:center; flex-shrink:0;}
@@ -232,9 +235,9 @@
     </div>
   </div>
 
-  <!-- 입력 -->
+  <!-- ① 본인 정보 -->
   <div class="card">
-    <p class="card-t">입력 <span class="badge input">사용자 입력</span></p>
+    <p class="card-t">본인 정보 <span class="badge input">사용자 입력</span></p>
 
     <div class="field">
       <label>소속 사업부 <span class="hint">· 색상이 본인 사업부를 표시</span></label>
@@ -280,6 +283,11 @@
       <input type="range" id="yearRange" min="2026" max="2035" step="1" value="2026">
       <div class="range-ends"><span>2026</span><span>2035</span></div>
     </div>
+  </div>
+
+  <!-- ② 영업이익 시나리오 → 세전 수령액 -->
+  <div class="card">
+    <p class="card-t">영업이익 시나리오 → 세전 수령액</p>
 
     <div class="field">
       <label>DS 영업이익 (시나리오) <span class="hint">· 단위: 조원</span></label>
@@ -291,20 +299,6 @@
       <div class="range-ends"><span>0조</span><span>500조</span></div>
     </div>
 
-    <div class="field">
-      <label>한계세율 <span class="hint">· 과세표준 마지막 구간</span></label>
-      <select class="tax-sel" id="taxSel"></select>
-    </div>
-
-    <div class="field">
-      <label>자사주 환산 주가 <span class="hint" id="payoutPriceHint">· 지급일 가정 주가 (기본: 2026-05-20 종가)</span></label>
-      <input class="num-in" type="text" inputmode="numeric" id="payoutPrice" value="₩276,000">
-    </div>
-  </div>
-
-  <!-- 임계값 체크 -->
-  <div class="card">
-    <p class="card-t">영업이익 임계값 체크</p>
     <div class="thresh" id="threshBox">
       <div class="ico" id="threshIco">—</div>
       <div class="tx">
@@ -312,17 +306,25 @@
         <div class="t2" id="threshT2">—</div>
       </div>
     </div>
-  </div>
 
-  <!-- 본인 예상 수령액 -->
-  <div class="card">
-    <p class="card-t">본인 예상 수령액 (1인당)</p>
     <div class="breakdown" id="breakdown"></div>
   </div>
 
-  <!-- 세후 + 자사주 -->
+  <!-- ③ 사업부별 비교 -->
   <div class="card">
-    <p class="card-t">세후 체감액 · 자사주 환산</p>
+    <p class="card-t">사업부별 1인당 비교 (현재 영업이익·연도 기준, 세전)</p>
+    <div class="bu-grid" id="buGrid"></div>
+  </div>
+
+  <!-- ④ 한계세율 → 세후 체감액 -->
+  <div class="card">
+    <p class="card-t">한계세율 → 세후 체감액</p>
+
+    <div class="field">
+      <label>한계세율 <span class="hint">· 과세표준 마지막 구간</span></label>
+      <select class="tax-sel" id="taxSel"></select>
+    </div>
+
     <div class="out-grid">
       <div class="out-cell">
         <div class="k">실효세율 (지방세 10% 포함)</div>
@@ -336,6 +338,19 @@
         <div class="k">세후 수령액 (자사주로 지급)</div>
         <div class="v mono" id="netAmt">—</div>
       </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 자사주 환산 -->
+  <div class="card">
+    <p class="card-t">자사주 환산</p>
+
+    <div class="field">
+      <label>자사주 환산 주가 <span class="hint" id="payoutPriceHint">· 지급일 가정 주가 (기본: 2026-05-20 종가)</span></label>
+      <input class="num-in" type="text" inputmode="numeric" id="payoutPrice" value="₩276,000">
+    </div>
+
+    <div class="out-grid">
       <div class="out-cell wide">
         <div class="k">자사주 수량 <small>= 세후 ÷ 환산 주가</small></div>
         <div class="v mono" id="shareCount">— 주</div>
@@ -368,13 +383,7 @@
     </div>
   </div>
 
-  <!-- 사업부별 비교 -->
-  <div class="card">
-    <p class="card-t">사업부별 1인당 비교 (현재 영업이익·연도 기준, 세전)</p>
-    <div class="bu-grid" id="buGrid"></div>
-  </div>
-
-  <!-- 차트 -->
+  <!-- ⑥ 차트 -->
   <div class="card">
     <p class="card-t">영업이익 시나리오별 1인당 수령액 (세전)</p>
     <div class="chips" id="chips"></div>
