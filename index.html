@@ -937,8 +937,8 @@
           if (data.asOf){
             // sample 여부와 무관하게 항상 asOf 표시
             $("payoutPriceHint").textContent = data.sample
-              ? "· 기본값: " + data.asOf + " 종가 (GitHub Actions 실행 후 자동 갱신)"
-              : "· 자동 갱신: " + data.asOf + " 종가 (매일 18:30 KST)";
+              ? "· 기본값: " + data.asOf + " 종가 · 평일 18:30 KST 자동 갱신"
+              : "· 자동 갱신: " + data.asOf + " 종가 · 평일 18:30 KST";
           }
         }
       })
