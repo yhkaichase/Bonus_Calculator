@@ -17,16 +17,6 @@
 └── README.md
 ```
 
-## 배포 (GitHub Pages + Actions)
-
-1. 이 폴더 전체를 새 GitHub 저장소에 푸시합니다.
-2. **Settings → Pages**: Source 를 `main` 브랜치 루트로 지정합니다.
-3. **Settings → Actions → General → Workflow permissions**:
-   `Read and write permissions` 선택해야 Actions가 `data.json`을 커밋·푸시할 수 있습니다.
-4. 1~2분 뒤 `https://<사용자명>.github.io/<저장소명>/` 에서 접속됩니다.
-5. 매 평일 18:30 KST (장 마감 3시간 후)에 `data.json`이 자동 갱신됩니다.
-   수동 실행은 **Actions → Update Samsung stock data → Run workflow**.
-
 ## 사용자 입력
 
 - **사업부** — 메모리 / 공통조직 / 적자 사업부 / DX·CSS
