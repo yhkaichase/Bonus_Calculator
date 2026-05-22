@@ -269,9 +269,9 @@
 
     <div class="field">
       <label>계약연봉액 + 업무 성과급
-        <span class="hint">· OPI 산정 기준 (연봉의 50%)</span>
+        <span class="hint">· 평균 ≈ 8,500만 추정 (OPI·TAI·복리후생 제외 순수 계약연봉)</span>
       </label>
-      <input class="num-in" type="text" inputmode="numeric" id="salary" value="₩100,000,000">
+      <input class="num-in" type="text" inputmode="numeric" id="salary" value="₩85,000,000">
     </div>
 
     <div class="field">
@@ -287,7 +287,7 @@
 
   <!-- ② 영업이익 시나리오 → 세전 수령액 -->
   <div class="card">
-    <p class="card-t">영업이익 시나리오 → 세전 수령액</p>
+    <p class="card-t">영업이익 시나리오 → 세전 수령액 <span class="hint" style="margin-left:auto; font-size:9px; letter-spacing:0; text-transform:none; font-weight:400;">· 연봉 비례 적용</span></p>
 
     <div class="field">
       <label>DS 영업이익 (시나리오) <span class="hint">· 단위: 조원</span></label>
@@ -404,6 +404,7 @@
       <li>DS 특별경영성과급 = 영업이익 × 10.5% (한도 없음, 세후 전액 자사주)</li>
       <li>지급 조건: 2026~2028년 DS 영업이익 200조 달성 / 2029~2035년 100조 달성</li>
       <li>재원 배분: 부문 40%(DS 전체 균등) + 사업부 60%(메모리·공통조직·흑자사업부)</li>
+      <li>특별성과급(부문+사업부)과 OPI 모두 입력 연봉에 비례 — 전체 재원에서 본인 연봉이 차지하는 비중으로 분배. 기준 평균 ≈ 8,500만원 (CL2 5.3~8천만, CL3 6.5천만~1.1억, CL4 9천만~1.3억 직급 분포 + 2025 사업보고서 총보수 1.58억에서 OPI·TAI·시간외·복리후생 약 45% 제외)</li>
       <li>공통조직 지급률 = 메모리의 0.7배 (부문·사업부 양쪽에 일관 적용)</li>
       <li>파운드리·LSI: 사업부 재원(60%)에는 비참여. 부문 재원(40%)에서 메모리 대비 2026년 1.0배, 2027년부터 0.6배 적용</li>
       <li>OPI 풀 = 영업이익 × 1.5% (DS 임직원 대상, 임계값 조건 없음). 본 계산기는 개인 1인당 = 입력 연봉 × 50%로 단순화 가정</li>
@@ -441,6 +442,7 @@
     commonRatio:   0.7,        // 공통 total = 메모리 total × 0.7 (부문+사업부 합산)
     divLossWeight2026: 1.0,    // 2026 적자 사업부의 부문 균등 가중치 (=정상)
     divLossWeight2027: 0.6,    // 2027~ 적자 사업부의 부문 균등 가중치 (=60% 차등)
+    avgSalary:   0.85e8,       // 평균 순수 계약연봉 ≈ 8,500만 (직급 분포 + 2025 사업보고서 총보수 1.58억의 약 55%)
     threshold: { early:200, late:100 },  // 영업이익 임계값 (조원)
     earlyEndYear: 2028,        // 200조 적용 마지막 해
     period: { start:2026, end:2035 },
@@ -478,7 +480,7 @@
     bu:           "memory",
     clGrade:      "CL4",
     gradeMult:    1.0,       // CL4 한정 보정 계수 (1.0 / 1.2 / 1.4)
-    salary:       100000000, // 계약연봉 + 업무성과급 (원, raw value — 배수 미적용)
+    salary:       85000000,  // 계약연봉 + 업무성과급 (원, raw value — 배수 미적용)
     year:         2026,
     opIncome:     50,        // 조원
     marginalRate: 0.35,
@@ -534,16 +536,17 @@
     var dlw   = divLossWeightFor(year);     // 파운드리·LSI 부문 가중치 (2026:1.0, 2027~:0.6)
     var r     = CONST.commonRatio;          // 0.7 = 공통/메모리 비율 (부문·사업부 양쪽 일관 적용)
     var opIncomeWon = opIncomeJo * 1e12;
+    var salaryFactor = salary / CONST.avgSalary;  // 평균 연봉 대비 비율 (전체 재원 중 내 몫)
 
     var divisionPer = 0, buPer = 0, opiPer = 0, pool = 0;
-    opiPer = salary * 0.5;
+    opiPer = salary * 0.5;   // OPI는 연봉 × 50% (직접 연봉 비례)
 
     if (meets){
       pool = opIncomeWon * CONST.specialRate;
       var divisionPool = pool * CONST.divisionShare;
       var buPool       = pool * CONST.buShare;
 
-      // 메모리 기준 1인당 산출 (부문, 사업부 각각)
+      // 평균 연봉 기준 메모리 1인당 (부문, 사업부)
       // 부문 가중인원: N_m × 1.0 + N_c × 0.7 + N_l × dlw
       var divWeighted = HC.memory + r * HC.common + dlw * HC.loss;
       var X_m = divisionPool / divWeighted;
@@ -553,14 +556,14 @@
       var Y_m = buPool / buWeighted;
 
       if (bu === "memory"){
-        divisionPer = X_m;
-        buPer       = Y_m;
+        divisionPer = X_m * salaryFactor;
+        buPer       = Y_m * salaryFactor;
       } else if (bu === "common"){
-        divisionPer = r * X_m;     // 메모리 부문 × 0.7
-        buPer       = r * Y_m;     // 메모리 사업부 × 0.7
+        divisionPer = r * X_m * salaryFactor;     // 메모리 부문 × 0.7
+        buPer       = r * Y_m * salaryFactor;     // 메모리 사업부 × 0.7
       } else { // loss (파운드리·LSI)
-        divisionPer = dlw * X_m;   // 메모리 부문 × dlw
-        buPer       = 0;           // 적자 시 사업부 재원 비참여
+        divisionPer = dlw * X_m * salaryFactor;   // 메모리 부문 × dlw
+        buPer       = 0;                          // 적자 시 사업부 재원 비참여
       }
     }
 
