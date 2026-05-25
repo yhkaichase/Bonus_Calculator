@@ -128,6 +128,17 @@
   .br-row.sum .val{font-size:18px;}
   .br-row .sub{font-size:10.5px; color:var(--soft); font-weight:400; margin-left:17px;}
 
+  /* 연봉 대비 비율 요약 */
+  .br-ratio{margin-top:10px; padding:9px 12px; background:#fff8e0;
+    border-radius:3px; border:1px solid #e8d99a;
+    display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .br-ratio .rr{display:flex; flex-direction:column; gap:2px;}
+  .br-ratio .rl{font-size:10.5px; color:#5a544a; line-height:1.35;}
+  .br-ratio .rl small{color:#7a7367; font-weight:400;}
+  .br-ratio .rv{font-size:16px; font-weight:700; color:#3a3a3a;}
+  .br-ratio .rv small{font-size:10.5px; font-weight:500; color:#7a7367;}
+  @media (max-width:430px){ .br-ratio{grid-template-columns:1fr;} }
+
   .out-grid{display:grid; grid-template-columns:1fr 1fr; gap:1px;
     background:var(--line); border:1px solid var(--line);
     border-radius:2px; overflow:hidden; margin-top:14px;}
@@ -138,6 +149,24 @@
   .out-cell.wide{grid-column:1 / -1;}
   .out-cell.hl{background:var(--ink);}
   .out-cell.hl .k{color:#b9b6ad;} .out-cell.hl .v{color:#fff;}
+
+  /* 누진세·건보료 자동 산출 표 */
+  .tax-box{background:#f7f3e9; border:1px solid var(--line); border-radius:3px;
+    padding:10px 12px; margin-bottom:9px;}
+  .tax-box.ins{background:#eef3f5;}
+  .tax-sec-title{font-size:11px; font-weight:600; margin-bottom:6px; color:#3a3a3a;
+    letter-spacing:0.02em;}
+  .tax-tbl{width:100%; font-size:11.5px; border-collapse:collapse;}
+  .tax-tbl td{padding:4px 0; vertical-align:baseline;}
+  .tax-tbl td:last-child{text-align:right; white-space:nowrap; font-size:12px;}
+  .tax-tbl tr{border-bottom:1px dashed rgba(0,0,0,0.06);}
+  .tax-tbl tr:last-child{border-bottom:none;}
+  .tax-tbl tr.dim{color:#7a7367;}
+  .tax-tbl tr.hl{background:#fff8e0;}
+  .tax-tbl tr.hl td{padding:6px 8px; font-weight:600;}
+  .tax-tbl tr.total td{padding-top:7px; font-weight:600; border-top:1px solid rgba(0,0,0,0.15);}
+  .tax-tbl .tt{display:block; font-size:9.5px; color:var(--soft); font-weight:400;
+    margin-top:1px; line-height:1.4;}
 
   /* 자사주 lockup 시각화 */
   .lockup{margin-top:14px;}
@@ -317,27 +346,52 @@
     <div class="bu-grid" id="buGrid"></div>
   </div>
 
-  <!-- ④ 한계세율 → 세후 체감액 -->
+  <!-- ④ 누진세·건보료 → 세후 체감액 -->
   <div class="card">
-    <p class="card-t">한계세율 → 세후 체감액</p>
+    <p class="card-t">누진세·건보료 → 세후 체감액 <span class="hint" style="margin-left:auto; font-size:9px; letter-spacing:0; text-transform:none; font-weight:400;">· 자동 산출</span></p>
 
-    <div class="field">
-      <label>한계세율 <span class="hint">· 과세표준 마지막 구간</span></label>
-      <select class="tax-sel" id="taxSel"></select>
+    <div class="tax-box">
+      <div class="tax-sec-title">📋 종합소득세 (총급여 = 입력 연봉 + 성과급)</div>
+      <table class="tax-tbl">
+        <tr><td>총급여</td><td class="mono" id="taxTotalGross">—</td></tr>
+        <tr class="dim"><td>(-) 근로소득공제 <span class="tt">1억 초과: 1,475만 + 초과분×2%, 한도 2천만</span></td><td class="mono" id="taxLaborDed">—</td></tr>
+        <tr><td>= 과세표준</td><td class="mono" id="taxTaxable">—</td></tr>
+        <tr class="hl"><td>적용 구간</td><td class="mono" id="taxBracket">—</td></tr>
+        <tr><td>소득세 <span class="tt">= 과세표준 × 세율 - 누진공제</span></td><td class="mono" id="taxIncome">—</td></tr>
+        <tr><td>지방소득세 <span class="tt">= 소득세 × 10%</span></td><td class="mono" id="taxLocal">—</td></tr>
+        <tr class="total"><td>총 세금</td><td class="mono" id="taxTotal">—</td></tr>
+      </table>
+    </div>
+
+    <div class="tax-box ins">
+      <div class="tax-sec-title">🏥 건강보험·장기요양 (직장가입자 본인부담, 연 환산)</div>
+      <table class="tax-tbl">
+        <tr><td>건강보험 <span class="tt">= 보수월액 × 3.595% (전체 7.19%의 50%)</span></td><td class="mono" id="insHealth">—</td></tr>
+        <tr><td>장기요양 <span class="tt">= 건강보험료 × 13.14%</span></td><td class="mono" id="insLTC">—</td></tr>
+        <tr class="total"><td>합계 (연)</td><td class="mono" id="insTotal">—</td></tr>
+      </table>
     </div>
 
     <div class="out-grid">
       <div class="out-cell">
-        <div class="k">실효세율 (지방세 10% 포함)</div>
+        <div class="k">성과급 한계세율 (지방세 포함)</div>
         <div class="v mono" id="effRate">—</div>
       </div>
       <div class="out-cell">
-        <div class="k">예상 세금</div>
+        <div class="k">성과급 추가 세금 <small>(= 성과급 × 한계세율)</small></div>
         <div class="v mono" id="taxAmt">—</div>
       </div>
-      <div class="out-cell hl wide">
-        <div class="k">세후 수령액 (자사주로 지급)</div>
+      <div class="out-cell">
+        <div class="k">성과급분 추가 건보료 <small>(별도 본인부담)</small></div>
+        <div class="v mono" id="bonusIns">—</div>
+      </div>
+      <div class="out-cell">
+        <div class="k">성과급 세후 <small>(자사주 환산 기준 · 회사 처리)</small></div>
         <div class="v mono" id="netAmt">—</div>
+      </div>
+      <div class="out-cell hl wide">
+        <div class="k">성과급 실수령 <small>(세금 + 건보료 차감 후 = 실질 net)</small></div>
+        <div class="v mono" id="netReal">—</div>
       </div>
     </div>
   </div>
@@ -353,7 +407,7 @@
 
     <div class="out-grid">
       <div class="out-cell wide">
-        <div class="k">자사주 수량 <small>= 세후 ÷ 환산 주가</small></div>
+        <div class="k">자사주 수량 <small>= 성과급 세후 ÷ 환산 주가 (회사 처리: 세금만 차감)</small></div>
         <div class="v mono" id="shareCount">— 주</div>
       </div>
     </div>
@@ -422,8 +476,11 @@
   <p class="foot">
     본 계산기는 2026-05-20 노사 잠정합의서에 대한 공개 보도를 바탕으로 한 비공식 참고용 도구입니다.
     OPI의 정확한 개인 분배 공식, 사업부 인원수, 파운드리·LSI 가중치 적용 방식 등은 공식 합의서 본문에
-    따라 다를 수 있습니다. 세후 추정은 한계세율 + 지방소득세 10%의 단순 추정치입니다.
-    제도 정보 출처: 세계일보(2026-05-21), 부산일보(2026-05-21). 한계세율: 국세청 소득세법 제55조.
+    따라 다를 수 있습니다. 세금은 (입력 연봉 + 성과급) 기준 누진세 자동 산출이며, 인적공제·세액공제 등은
+    미반영된 간이 추정치입니다. 자사주는 회사 차원에서 세금만 원천징수 후 부여되며, 건강보험·장기요양은
+    별도 본인부담으로 월급에서 차감됩니다 (성과급 발생 월에 보수월액 정산을 통해 추가 부과).
+    제도 정보 출처: 세계일보(2026-05-21), 부산일보(2026-05-21). 누진세율: 소득세법 제55조 (2026 귀속).
+    건강보험·장기요양: 보건복지부 2025-11-04 보도자료 (2026년 적용).
   </p>
 </div>
 
@@ -461,18 +518,30 @@
   };
 
   /* ===================================================================
-   * 종합소득세 한계세율표 (2026 귀속 · 소득세법 제55조)
+   * 종합소득세 누진세율표 (2026 귀속 · 소득세법 제55조)
+   *   산출세액 = 과세표준 × 세율 - 누진공제
+   *   + 지방소득세 = 소득세 × 10%
    * =================================================================== */
   var TAX_BRACKETS = [
-    { rate:0.06, label:"6%  · 과세표준 1,400만원 이하" },
-    { rate:0.15, label:"15% · 1,400만 ~ 5,000만원" },
-    { rate:0.24, label:"24% · 5,000만 ~ 8,800만원" },
-    { rate:0.35, label:"35% · 8,800만 ~ 1.5억원" },
-    { rate:0.38, label:"38% · 1.5억 ~ 3억원" },
-    { rate:0.40, label:"40% · 3억 ~ 5억원" },
-    { rate:0.42, label:"42% · 5억 ~ 10억원" },
-    { rate:0.45, label:"45% · 10억원 초과" }
+    { up: 14000000,    rate:0.06, deduct:        0, label:"6%  · 1,400만 이하" },
+    { up: 50000000,    rate:0.15, deduct:  1260000, label:"15% · 1,400만 ~ 5,000만" },
+    { up: 88000000,    rate:0.24, deduct:  5760000, label:"24% · 5,000만 ~ 8,800만" },
+    { up: 150000000,   rate:0.35, deduct: 15440000, label:"35% · 8,800만 ~ 1.5억" },
+    { up: 300000000,   rate:0.38, deduct: 19940000, label:"38% · 1.5억 ~ 3억" },
+    { up: 500000000,   rate:0.40, deduct: 25940000, label:"40% · 3억 ~ 5억" },
+    { up: 1000000000,  rate:0.42, deduct: 35940000, label:"42% · 5억 ~ 10억" },
+    { up: Infinity,    rate:0.45, deduct: 65940000, label:"45% · 10억 초과" }
   ];
+
+  /* ===================================================================
+   * 4대보험 (2026 보건복지부 확정치)
+   * =================================================================== */
+  var INS = {
+    healthRate:     0.0719,    // 직장가입자 건강보험료율 (2025년 7.09% → 2026년 7.19%, 1.48% 인상)
+    healthEmployee: 0.5,        // 본인 부담 50% (회사 50%)
+    ltcOfHealth:    0.1314,    // 장기요양보험료 = 건강보험료의 13.14% (2026년)
+    monthlyCap:     119620000  // 보수월액 상한 (월 약 1억 1,962만 → 연 ~14.35억)
+  };
 
   /* ===================================================================
    * ③  사용자 입력
@@ -484,7 +553,6 @@
     salary:       85000000,  // 계약연봉 + 업무성과급 (원, raw value — 배수 미적용)
     year:         2026,
     opIncome:     50,        // 조원
-    marginalRate: 0.35,
     payoutPrice:  276000,    // 원 (2026-05-20 삼성전자 종가)
     chartXMin:    0,         // 차트 X축 표시 범위 (조원)
     chartXMax:    500
@@ -580,32 +648,97 @@
     };
   }
 
+  /* ===================================================================
+   * ⑤  자동 누진세 + 건강보험료 계산
+   * =================================================================== */
+
+  // 근로소득공제 (2025~2026 동일 적용)
+  function calcLaborDeduction(grossSalary){
+    if (grossSalary <= 5000000)   return grossSalary * 0.7;
+    if (grossSalary <= 15000000)  return  3500000 + (grossSalary -  5000000) * 0.4;
+    if (grossSalary <= 45000000)  return  7500000 + (grossSalary - 15000000) * 0.15;
+    if (grossSalary <= 100000000) return 12000000 + (grossSalary - 45000000) * 0.05;
+    return Math.min(14750000 + (grossSalary - 100000000) * 0.02, 20000000); // 상한 2,000만
+  }
+
+  // 적용 구간 찾기
+  function findBracket(taxable){
+    for (var i = 0; i < TAX_BRACKETS.length; i++){
+      if (taxable <= TAX_BRACKETS[i].up) return TAX_BRACKETS[i];
+    }
+    return TAX_BRACKETS[TAX_BRACKETS.length - 1];
+  }
+
+  // 누진세 자동 계산 (총급여 = 연봉 + 성과급)
+  function calcProgressiveTax(salary, bonus){
+    var totalGross = salary + bonus;
+    var laborDed   = calcLaborDeduction(totalGross);
+    var taxable    = Math.max(0, totalGross - laborDed);
+    var bracket    = findBracket(taxable);
+    var incomeTax  = Math.max(0, taxable * bracket.rate - bracket.deduct);
+    var localTax   = incomeTax * CONST.localTaxRate;
+    return {
+      totalGross:    totalGross,
+      laborDed:      laborDed,
+      taxable:       taxable,
+      bracket:       bracket,
+      incomeTax:     incomeTax,
+      localTax:      localTax,
+      totalTax:      incomeTax + localTax,
+      marginalRate:  bracket.rate * (1 + CONST.localTaxRate)  // 한계세율 + 지방세
+    };
+  }
+
+  // 건강보험료 + 장기요양 (직장가입자 본인부담, 연 환산)
+  function calcHealthInsurance(salary, bonus){
+    var annual       = salary + bonus;
+    var monthlyBase  = annual / 12;
+    var capped       = monthlyBase > INS.monthlyCap;
+    var effMonthly   = Math.min(monthlyBase, INS.monthlyCap);
+    var monthlyHealth = effMonthly * INS.healthRate * INS.healthEmployee;
+    var monthlyLTC    = monthlyHealth * INS.ltcOfHealth;
+    return {
+      capped:       capped,
+      annualHealth: monthlyHealth * 12,
+      annualLTC:    monthlyLTC    * 12,
+      totalAnnual:  (monthlyHealth + monthlyLTC) * 12
+    };
+  }
+
   function compute(){
     var c = computeFor(input.opIncome, input.year, input.bu,
                        input.salary, effMult());
-    var effRate = input.marginalRate * (1 + CONST.localTaxRate);
+
+    // 누진세 자동 계산 (입력 연봉 + 성과급 합산 기준)
+    var taxR    = calcProgressiveTax(input.salary, c.gross);
+    var insAll  = calcHealthInsurance(input.salary, c.gross);    // 전체 (연봉+성과급) 건보료
+    var insBase = calcHealthInsurance(input.salary, 0);            // 연봉만 기준 건보료
+    var bonusIns = Math.max(0, insAll.totalAnnual - insBase.totalAnnual);
+                  // 성과급으로 인한 증분 건보료 본인부담 (보수월액 한도 고려)
+
+    // 성과급에 대한 추가 세금 = 한계세율 × 성과급 (자사주 환산용)
+    // (정확하게는 tax(salary+bonus) - tax(salary) 이지만, 성과급이 통상 상위 구간에
+    //  머무르므로 한계세율 적용이 좋은 근사. 차이는 미미함)
+    var effRate = taxR.marginalRate;
     var tax     = c.gross * effRate;
-    var net     = c.gross - tax;
+    var net     = c.gross - tax;                  // 자사주 환산 기준 (세금만 차감, 회사 처리)
+    var netReal = Math.max(0, net - bonusIns);    // 실수령 (세금 + 성과급분 건보료 차감 후)
     var shares  = input.payoutPrice > 0 ? Math.floor(net / input.payoutPrice) : 0;
+
     return {
       meets: c.meets, threshold: thresholdFor(input.year),
       pool: c.pool, divisionPer: c.divisionPer, buPer: c.buPer,
       opiPer: c.opiPer, sep: c.sep,
       gross: c.gross, effRate: effRate, tax: tax, net: net,
-      shares: shares
+      bonusIns: bonusIns, netReal: netReal,
+      shares: shares,
+      taxR: taxR, ins: insAll
     };
   }
 
   /* ── 1회성 초기화 ────────────────────────────────────────────────── */
   function buildOnce(){
-    // 세율 select
-    var sel = $("taxSel");
-    TAX_BRACKETS.forEach(function(b){
-      var o = document.createElement("option");
-      o.value = b.rate; o.textContent = b.label;
-      if (b.rate === input.marginalRate) o.selected = true;
-      sel.appendChild(o);
-    });
+    // (이전 한계세율 select는 자동 누진세 산출로 대체되어 제거됨)
   }
 
   /* ── 렌더: 임계값 체크 ───────────────────────────────────────────── */
@@ -664,14 +797,54 @@
     });
     html += '<div class="br-row sum"><div class="lab">합계 (세전)</div>'+
       '<div class="val">'+compact(c.gross)+'</div></div>';
+
+    // ── 연봉 대비 비율 요약
+    var special = c.divisionPer + c.buPer;       // 특별경영성과급 (부문 + 사업부, OPI 제외)
+    var totalComp = input.salary + c.gross;      // 총 보수 (연봉 + 특별 + OPI)
+    var specialRatio = input.salary > 0 ? special   / input.salary : 0;
+    var totalRatio   = input.salary > 0 ? totalComp / input.salary : 0;
+    html += '<div class="br-ratio">'+
+      '<div class="rr"><div class="rl">특별경영성과급 ÷ 연봉</div>'+
+        '<div class="rv mono">×'+specialRatio.toFixed(2)+
+        ' <small>(연봉의 '+(specialRatio*100).toFixed(0)+'%)</small></div></div>'+
+      '<div class="rr"><div class="rl">총 보수 ÷ 연봉 <small>(연봉+특별+OPI)</small></div>'+
+        '<div class="rv mono">×'+totalRatio.toFixed(2)+
+        ' <small>(연봉의 '+(totalRatio*100).toFixed(0)+'%)</small></div></div>'+
+    '</div>';
     box.innerHTML = html;
   }
 
   /* ── 렌더: 세후·자사주·lockup ────────────────────────────────────── */
   function renderTax(c){
+    // ── 종합소득세 표
+    var t = c.taxR;
+    $("taxTotalGross").textContent = compact(t.totalGross);
+    $("taxLaborDed").textContent   = "− " + compact(t.laborDed);
+    $("taxTaxable").textContent    = compact(t.taxable);
+    $("taxBracket").innerHTML      = t.bracket.label;
+    $("taxIncome").textContent     = compact(t.incomeTax);
+    $("taxLocal").textContent      = compact(t.localTax);
+    $("taxTotal").innerHTML        = compact(t.totalTax) +
+      ' <small style="font-size:9.5px; color:#7a7367; font-weight:400;">· 총급여 대비 ' +
+      pct(t.totalTax / t.totalGross) + '</small>';
+
+    // ── 건강보험·장기요양 표
+    var ins = c.ins;
+    $("insHealth").textContent = compact(ins.annualHealth) +
+      ' /년 (' + compact(ins.annualHealth/12) + '/월)';
+    $("insLTC").textContent    = compact(ins.annualLTC) +
+      ' /년 (' + compact(ins.annualLTC/12) + '/월)';
+    $("insTotal").innerHTML    = compact(ins.totalAnnual) +
+      ' /년 <small style="font-size:9.5px; color:#7a7367; font-weight:400;">· 월평균 ' +
+      compact(ins.totalAnnual/12) + '</small>';
+
+    // ── 세후·자사주
     $("effRate").textContent  = pct(c.effRate);
     $("taxAmt").textContent   = compact(c.tax);
+    $("bonusIns").innerHTML   = compact(c.bonusIns) +
+      ' <small style="font-size:11px; font-weight:500; color:var(--soft);">= 성과급 × ~4.07%</small>';
     $("netAmt").innerHTML     = krw(c.net) + ' <small>('+compact(c.net)+')</small>';
+    $("netReal").innerHTML    = krw(c.netReal) + ' <small>('+compact(c.netReal)+')</small>';
     $("shareCount").innerHTML = c.shares.toLocaleString("ko-KR") + ' <small>주</small>';
 
     // 1/3씩 분할 — 나머지는 마지막 분량에
@@ -915,10 +1088,6 @@
     });
     $("opRange").addEventListener("input", function(e){
       input.opIncome = parseInt(e.target.value,10);
-      render();
-    });
-    $("taxSel").addEventListener("change", function(e){
-      input.marginalRate = parseFloat(e.target.value);
       render();
     });
     $("infoToggle").addEventListener("click", function(){
