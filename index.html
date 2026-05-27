@@ -299,9 +299,9 @@
 
     <div class="field">
       <label>계약연봉액 + 업무 성과급
-        <span class="hint">· 평균 ≈ 8,500만 추정 (OPI·TAI·복리후생 제외 순수 계약연봉)</span>
+        <span class="hint">· 평균 ≈ 8,700만 추정 (OPI·TAI·복리후생 제외 순수 계약연봉)</span>
       </label>
-      <input class="num-in" type="text" inputmode="numeric" id="salary" value="₩85,000,000">
+      <input class="num-in" type="text" inputmode="numeric" id="salary" value="₩87,000,000">
     </div>
 
     <div class="field">
@@ -374,11 +374,11 @@
 
     <div class="out-grid">
       <div class="out-cell">
-        <div class="k">성과급 한계세율 (지방세 포함)</div>
+        <div class="k">성과급 실효세율 <small>(지방세 포함, 구간 가로지름 반영)</small></div>
         <div class="v mono" id="effRate">—</div>
       </div>
       <div class="out-cell">
-        <div class="k">성과급 추가 세금 <small>(= 성과급 × 한계세율)</small></div>
+        <div class="k">성과급 추가 세금 <small>(= tax(연봉+성과급) − tax(연봉))</small></div>
         <div class="v mono" id="taxAmt">—</div>
       </div>
       <div class="out-cell">
@@ -462,12 +462,16 @@
       <li>특별성과급(부문+사업부)과 OPI 모두 입력 연봉에 비례 — 전체 재원에서 본인 연봉이 차지하는 비중으로 분배. 기준 평균 ≈ 8,500만원 (CL2 5.3~8천만, CL3 6.5천만~1.1억, CL4 9천만~1.3억 직급 분포 + 2025 사업보고서 총보수 1.58억에서 OPI·TAI·시간외·복리후생 약 45% 제외)</li>
       <li>공통조직 지급률 = 메모리의 0.7배 (부문·사업부 양쪽에 일관 적용)</li>
       <li>파운드리·LSI: 사업부 재원(60%)에는 비참여. 부문 재원(40%)에서 메모리 대비 2026년 1.0배, 2027년부터 0.6배 적용</li>
-      <li>OPI 풀 = 영업이익 × 1.5% (DS 임직원 대상, 임계값 조건 없음). 본 계산기는 개인 1인당 = 입력 연봉 × 50%로 단순화 가정</li>
+      <li>OPI 풀 = 영업이익 × 1.5% (DS 임직원 대상, 임계값 조건 없음).
+        본 계산기는 개인 1인당 OPI를 <b>연봉 × 50%</b>(제도상 상한)로 고정 가정하며,
+        영업이익에 비례하지 않는다. 풀과 일치하려면 DS 영업이익이 약 220조 이상이어야 하므로,
+        그 이하 시나리오에서는 본 계산기의 OPI가 실제보다 과대 추정될 수 있다.</li>
       <li>자사주 1/3씩 즉시 매각 / 1년 제한 / 2년 제한</li>
       <li>적용 기간: 10년 (2026~2035)</li>
     </ul>
     <p>유의: OPI의 정확한 개인 분배 공식(직급·연봉·고과별 차등)은 공개되어 있지 않아,
-      이 계산기는 입력 연봉의 50%를 1인당 OPI로 단순 가정했습니다.
+      이 계산기는 입력 연봉의 50%(제도상 상한)를 1인당 OPI로 고정 가정했습니다.
+      따라서 OPI 항목은 영업이익 변화에 무관하며, 저영업이익 시나리오에서는 실제 OPI보다 과대 추정될 수 있습니다.
       사업부 인원수도 부산일보 보도의 추산치(메모리 28천 / 공통 30천 / 파운드리·LSI 20천)이며 공식 수치가 아닙니다.
       직급은 현재 모델에서 분배에 직접 영향을 주지 않으며, 표시용으로만 사용됩니다.
       실제 지급액은 본 추정과 다를 수 있으며 공식 안내 및 세무 신고 결과에 따릅니다.</p>
@@ -500,7 +504,7 @@
     commonRatio:   0.7,        // 공통 total = 메모리 total × 0.7 (부문+사업부 합산)
     divLossWeight2026: 1.0,    // 2026 적자 사업부의 부문 균등 가중치 (=정상)
     divLossWeight2027: 0.6,    // 2027~ 적자 사업부의 부문 균등 가중치 (=60% 차등)
-    avgSalary:   0.85e8,       // 평균 순수 계약연봉 ≈ 8,500만 (직급 분포 + 2025 사업보고서 총보수 1.58억의 약 55%)
+    avgSalary:   0.87e8,       // 평균 순수 계약연봉 ≈ 8,700만 (2025 사업보고서 총보수 1.58억 × 55%, OPI·TAI·시간외·복리후생 약 45% 제외)
     threshold: { early:200, late:100 },  // 영업이익 임계값 (조원)
     earlyEndYear: 2028,        // 200조 적용 마지막 해
     period: { start:2026, end:2035 },
@@ -550,7 +554,7 @@
     bu:           "memory",
     clGrade:      "CL4",
     gradeMult:    1.0,       // CL4 한정 보정 계수 (1.0 / 1.2 / 1.4)
-    salary:       85000000,  // 계약연봉 + 업무성과급 (원, raw value — 배수 미적용)
+    salary:       87000000,  // 계약연봉 + 업무성과급 (원, raw value — 배수 미적용)
     year:         2026,
     opIncome:     50,        // 조원
     payoutPrice:  276000,    // 원 (2026-05-20 삼성전자 종가)
@@ -559,12 +563,11 @@
   };
 
   // CL4에서만 보정 계수가 실제 적용된다. CL1~3은 항상 ×1.0.
+  // 이 mult은 특별경영성과급(부문+사업부)·OPI 세 항목 모두에 곱해진다.
+  // 입력 연봉에는 고과 배수를 반영하지 말 것 — 이중 적용이 된다.
   function effMult(){
     return input.clGrade === "CL4" ? input.gradeMult : 1.0;
   }
-
-  // 고과 배수는 코드에서 다루지 않음 — 민감 정보이므로 사용자가 연봉값에
-  // 직접 곱해 입력하도록 안내. (예: 가고과 CL4 → 연봉 × 1.4를 입력)
 
   /* ── 색·라벨 매핑 ────────────────────────────────────────────────── */
   var BU_INFO = {
@@ -710,17 +713,17 @@
                        input.salary, effMult());
 
     // 누진세 자동 계산 (입력 연봉 + 성과급 합산 기준)
-    var taxR    = calcProgressiveTax(input.salary, c.gross);
-    var insAll  = calcHealthInsurance(input.salary, c.gross);    // 전체 (연봉+성과급) 건보료
-    var insBase = calcHealthInsurance(input.salary, 0);            // 연봉만 기준 건보료
+    var taxR     = calcProgressiveTax(input.salary, c.gross);
+    var taxBase  = calcProgressiveTax(input.salary, 0);            // 연봉만 기준 세금
+    var insAll   = calcHealthInsurance(input.salary, c.gross);     // 전체 (연봉+성과급) 건보료
+    var insBase  = calcHealthInsurance(input.salary, 0);           // 연봉만 기준 건보료
     var bonusIns = Math.max(0, insAll.totalAnnual - insBase.totalAnnual);
                   // 성과급으로 인한 증분 건보료 본인부담 (보수월액 한도 고려)
 
-    // 성과급에 대한 추가 세금 = 한계세율 × 성과급 (자사주 환산용)
-    // (정확하게는 tax(salary+bonus) - tax(salary) 이지만, 성과급이 통상 상위 구간에
-    //  머무르므로 한계세율 적용이 좋은 근사. 차이는 미미함)
-    var effRate = taxR.marginalRate;
-    var tax     = c.gross * effRate;
+    // 성과급에 대한 추가 세금 = tax(연봉+성과급) - tax(연봉)
+    // 성과급이 여러 구간을 가로지를 때도 정확한 증분 세금을 산출한다.
+    var tax     = Math.max(0, taxR.totalTax - taxBase.totalTax);
+    var effRate = c.gross > 0 ? tax / c.gross : taxR.marginalRate;  // 실효 한계세율
     var net     = c.gross - tax;                  // 자사주 환산 기준 (세금만 차감, 회사 처리)
     var netReal = Math.max(0, net - bonusIns);    // 실수령 (세금 + 성과급분 건보료 차감 후)
     var shares  = input.payoutPrice > 0 ? Math.floor(net / input.payoutPrice) : 0;
