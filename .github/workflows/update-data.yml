@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   update:
@@ -22,9 +23,11 @@ jobs:
           python-version: '3.12'
 
       - name: Update data.json
+        id: update
         run: python scripts/update_data.py
 
       - name: Commit and push if changed
+        if: success()
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -35,3 +38,39 @@ jobs:
             git commit -m "auto: update Samsung stock price"
             git push
           fi
+
+      - name: Open issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `주가 자동 갱신 실패 (${new Date().toISOString().slice(0,10)})`;
+            // 같은 날 이미 열린 동일 이슈가 있으면 중복 생성 방지
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'data-update-failure',
+              per_page: 50,
+            });
+            if (existing.some(i => i.title === title)) {
+              core.info('이미 동일 이슈 존재 — 생성 생략');
+              return;
+            }
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              labels: ['data-update-failure'],
+              body: [
+                `모든 주가 소스(Naver siseJson → Naver polling → Stooq → Yahoo)가 실패했습니다.`,
+                ``,
+                `실행 로그: ${runUrl}`,
+                ``,
+                `대처:`,
+                `1. 위 로그에서 어떤 소스가 어떤 에러로 실패했는지 확인`,
+                `2. 외부 API 변경이라면 \`scripts/update_data.py\` 갱신`,
+                `3. 일시적이면 \`workflow_dispatch\`로 재실행`,
+              ].join('\n'),
+            });
